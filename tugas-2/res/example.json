@@ -1,0 +1,16 @@
+{
+    // vertices: tiap baris melambangkan titik/vertex yang ada pada layar
+    "vertices": [
+        x1, y1, r1, g1, b1,
+        x2, y2, r2, g2, b2
+    ],
+    // elements: tiap baris melambangkan vertex ke berapa saja untuk membentuk segitiga
+    //           (gambar yang akan dibuat akan terdiri dari banyak segitiga = 3 vertex)
+    "elements": [
+        0, 5, 4,
+        4, 5, 1,
+        1, 5, 2,
+        2, 5, 3,
+        3, 5, 0 
+    ]
+}
