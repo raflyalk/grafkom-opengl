@@ -108,15 +108,22 @@ def main():
     glClearColor(0.2, 0.3, 0.2, 1.0)
     glEnable(GL_DEPTH_TEST)
     # glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-
+    counter_x = 0
+    counter_y = 0
     while not glfw.window_should_close(window):
         glfw.poll_events()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-        rot_x = pyrr.Matrix44.from_x_rotation(0.5 * glfw.get_time() )
-        rot_y = pyrr.Matrix44.from_y_rotation(0.8 * glfw.get_time() )
-
+        rot_x = pyrr.Matrix44.from_x_rotation(0.5 * counter_x )
+        rot_y = pyrr.Matrix44.from_y_rotation(0.5 * counter_y )
+        if (glfw.get_key(window,glfw.KEY_UP) == glfw.PRESS):
+            counter_x-=0.01
+        if (glfw.get_key(window,glfw.KEY_DOWN) == glfw.PRESS):
+            counter_x+=0.01
+        if (glfw.get_key(window,glfw.KEY_RIGHT) == glfw.PRESS):
+            counter_y+=0.01
+        if (glfw.get_key(window,glfw.KEY_LEFT) == glfw.PRESS):
+            counter_y-=0.01
         transformLoc = glGetUniformLocation(shader, "transform")
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, rot_x * rot_y)
 
