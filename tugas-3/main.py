@@ -11,7 +11,7 @@ def main():
     if not glfw.init():
         return
 
-    window = glfw.create_window(600, 600, "My OpenGL window", None, None)
+    window = glfw.create_window(800, 800, "My OpenGL window", None, None)
 
     if not window:
         glfw.terminate()
@@ -23,20 +23,35 @@ def main():
              0.5, -0.5,  0.5, 0.0, 1.0, 0.0,
              0.5,  0.5,  0.5, 0.0, 0.0, 1.0,
             -0.5,  0.5,  0.5, 1.0, 1.0, 1.0,
-
+ 
             -0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
              0.5, -0.5, -0.5, 0.0, 1.0, 0.0,
              0.5,  0.5, -0.5, 0.0, 0.0, 1.0,
-            -0.5,  0.5, -0.5, 1.0, 1.0, 1.0]
+            -0.5,  0.5, -0.5, 1.0, 1.0, 1.0,
 
+            0.5, 0, 0.5, 0.0, 1.0, 0.0,
+            0.5, 0, -0.5, 0.0, 1.0, 0.0,   
+            0.5, -0.5, 0.5, 0.0, 1.0, 0.0, 
+            0.5, -0.5, -0.5, 0.0, 1.0, 0.0, 
+
+            0.8, -0.1, 0.5, 0.0, 1.0, 0.0,  
+            0.8, -0.1, -0.5, 0.0, 1.0, 0.0,    
+            0.8, -0.5, 0.5, 0.0, 1.0, 0.0, 
+            0.8, -0.5, -0.5, 0.0, 1.0, 0.0, 
+        ]
+
+    
     cube = numpy.array(cube, dtype = numpy.float32)
 
-    indices = [0, 1, 2, 2, 3, 0,
-               4, 5, 6, 6, 7, 4,
-               4, 5, 1, 1, 0, 4,
-               6, 7, 3, 3, 2, 6,
-               5, 6, 2, 2, 1, 5,
-               7, 4, 0, 0, 3, 7]
+    indices = [
+        0, 1, 2, 3,
+        4, 5, 6, 7,
+        4, 5, 1, 0,
+        6, 7, 3, 2,
+        # 5, 6, 2, 1,
+        # tambahin index buat moncong
+        7, 4, 0, 3
+    ]
 
     indices = numpy.array(indices, dtype= numpy.uint32)
 
@@ -69,11 +84,11 @@ def main():
 
     VBO = glGenBuffers(1)
     glBindBuffer(GL_ARRAY_BUFFER, VBO)
-    glBufferData(GL_ARRAY_BUFFER, 192, cube, GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, len(cube)*4, cube, GL_STATIC_DRAW)
 
     EBO = glGenBuffers(1)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 144, indices, GL_STATIC_DRAW)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices)*4, indices, GL_STATIC_DRAW)
 
     position = glGetAttribLocation(shader, "position")
     glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
@@ -88,7 +103,7 @@ def main():
 
     glClearColor(0.2, 0.3, 0.2, 1.0)
     glEnable(GL_DEPTH_TEST)
-    #glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+    # glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
@@ -101,11 +116,12 @@ def main():
         transformLoc = glGetUniformLocation(shader, "transform")
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, rot_x * rot_y)
 
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
+        glDrawElements(GL_QUADS, len(indices), GL_UNSIGNED_INT, None)
 
         glfw.swap_buffers(window)
 
     glfw.terminate()
+
 
 if __name__ == "__main__":
     main()
