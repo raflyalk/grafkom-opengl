@@ -222,6 +222,7 @@ def main():
     glUniformMatrix4fv(proj_loc, 1, GL_FALSE, projection)
     glUniformMatrix4fv(model_loc, 1, GL_FALSE, model)
 
+    rx, ry = (0,0)
     counter_x = 0
     counter_y = 0
 
@@ -233,12 +234,13 @@ def main():
         rot_y = pyrr.Matrix44.from_y_rotation(0.9 * counter_y )
         if (glfw.get_key(window,glfw.KEY_UP) == glfw.PRESS):
             counter_x-=0.01
-        if (glfw.get_key(window,glfw.KEY_DOWN) == glfw.PRESS):
+        elif (glfw.get_key(window,glfw.KEY_DOWN) == glfw.PRESS):
             counter_x+=0.01
         if (glfw.get_key(window,glfw.KEY_RIGHT) == glfw.PRESS):
             counter_y+=0.01
-        if (glfw.get_key(window,glfw.KEY_LEFT) == glfw.PRESS):
+        elif (glfw.get_key(window,glfw.KEY_LEFT) == glfw.PRESS):
             counter_y-=0.01
+
         glUniformMatrix4fv(transform_loc, 1, GL_FALSE, rot_x * rot_y)
         glUniformMatrix4fv(light_loc, 1, GL_FALSE, rot_x * rot_y)
 
