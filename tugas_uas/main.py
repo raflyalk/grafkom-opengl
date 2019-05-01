@@ -69,7 +69,6 @@ def drawRain():
 def window_resize(window, width, height):
     glViewport(0, 0, width, height)
 
-
 def main():
 
     # initialize glfw
