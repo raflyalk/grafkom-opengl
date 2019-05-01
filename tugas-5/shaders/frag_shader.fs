@@ -1,4 +1,5 @@
-#version 330
+#version 320 es
+precision mediump float;
 in vec2 newTexture;
 in vec3 fragNormal;
 

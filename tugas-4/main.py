@@ -1,183 +1,113 @@
-import pygame
-import sys
+import glfw
 from OpenGL.GL import *
-from OpenGL.GLU import *
+import ShaderLoader
+import numpy
+import pyrr
+from PIL import Image
+from ObjLoader import *
 
-vertices = (
-    # x  y  z
-    (1, -1, -1),
-    (1, 1, -1),
-    (-1, 1, -1),
-    (-1, -1, -1),
-    (1, -1, 1),
-    (1, 1, 1),
-    (-1, -1, 1),
-    (-1, 1, 1)
-)
+def window_resize(window, width, height):
+    glViewport(0, 0, width, height)
 
-edges = (
-    (0, 1),
-    (0, 3),
-    (0, 4),
-    (2, 1),
-    (2, 3),
-    (2, 7),
-    (6, 3),
-    (6, 4),
-    (6, 7),
-    (5, 1),
-    (5, 4),
-    (5, 7)
-)
+def main():
+
+    # initialize glfw
+    if not glfw.init():
+        return
+
+    w_width, w_height = 800, 600
+
+    #glfw.window_hint(glfw.RESIZABLE, GL_FALSE)
+
+    window = glfw.create_window(w_width, w_height, "My OpenGL window", None, None)
+
+    if not window:
+        glfw.terminate()
+        return
+
+    glfw.make_context_current(window)
+    glfw.set_window_size_callback(window, window_resize)
+
+    obj = ObjLoader()
+    obj.load_model("res/car_small.obj")
+
+    texture_offset = len(obj.vertex_index)*12
 
 
-def loadTexture():
-    textureSurface = pygame.image.load('a25.jpg')
-    textureData = pygame.image.tostring(textureSurface, "RGBA", 1)
-    width = textureSurface.get_width()
-    height = textureSurface.get_height()
+    shader = ShaderLoader.compile_shader("shaders/vert_shader.vs", "shaders/frag_shader.fs")
 
+    VBO = glGenBuffers(1)
+    glBindBuffer(GL_ARRAY_BUFFER, VBO)
+    glBufferData(GL_ARRAY_BUFFER, obj.model.itemsize * len(obj.model), obj.model, GL_STATIC_DRAW)
+
+    #position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, obj.model.itemsize * 3, ctypes.c_void_p(0))
+    glEnableVertexAttribArray(0)
+    #texture
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, obj.model.itemsize * 2, ctypes.c_void_p(texture_offset))
+    glEnableVertexAttribArray(1)
+
+
+    texture = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture)
+    # Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    # Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    # load image
+    image = Image.open("res/cube_texture.jpg")
+    flipped_image = image.transpose(Image.FLIP_TOP_BOTTOM)
+    img_data = numpy.array(list(flipped_image.getdata()), numpy.uint8)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
     glEnable(GL_TEXTURE_2D)
-    texid = glGenTextures(1)
-
-    glBindTexture(GL_TEXTURE_2D, texid)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData)
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-
-    return texid
 
 
-def draw_cube(lines=False):
-    if lines:
-        glBegin(GL_LINES)
-        for edge in edges:
-            glColor3fv((1, 1, 1))
-            for vertex in edge:
-                glVertex3fv(vertices[vertex])
-        glEnd()
-    else:
-        glBegin(GL_QUADS)
-        glTexCoord2f(0.0, 0.0)
-        glVertex3f(-1.0, -1.0,  1.0)
-        glTexCoord2f(1.0, 0.0)
-        glVertex3f(1.0, -1.0,  1.0)
-        glTexCoord2f(1.0, 1.0)
-        glVertex3f(1.0,  1.0,  1.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex3f(-1.0,  1.0,  1.0)
-        glTexCoord2f(1.0, 0.0)
-        glVertex3f(-1.0, -1.0, -1.0)
-        glTexCoord2f(1.0, 1.0)
-        glVertex3f(-1.0,  1.0, -1.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex3f(1.0,  1.0, -1.0)
-        glTexCoord2f(0.0, 0.0)
-        glVertex3f(1.0, -1.0, -1.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex3f(-1.0,  1.0, -1.0)
-        glTexCoord2f(0.0, 0.0)
-        glVertex3f(-1.0,  1.0,  1.0)
-        glTexCoord2f(1.0, 0.0)
-        glVertex3f(1.0,  1.0,  1.0)
-        glTexCoord2f(1.0, 1.0)
-        glVertex3f(1.0,  1.0, -1.0)
-        glTexCoord2f(1.0, 1.0)
-        glVertex3f(-1.0, -1.0, -1.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex3f(1.0, -1.0, -1.0)
-        glTexCoord2f(0.0, 0.0)
-        glVertex3f(1.0, -1.0,  1.0)
-        glTexCoord2f(1.0, 0.0)
-        glVertex3f(-1.0, -1.0,  1.0)
-        glTexCoord2f(1.0, 0.0)
-        glVertex3f(1.0, -1.0, -1.0)
-        glTexCoord2f(1.0, 1.0)
-        glVertex3f(1.0,  1.0, -1.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex3f(1.0,  1.0,  1.0)
-        glTexCoord2f(0.0, 0.0)
-        glVertex3f(1.0, -1.0,  1.0)
-        glTexCoord2f(0.0, 0.0)
-        glVertex3f(-1.0, -1.0, -1.0)
-        glTexCoord2f(1.0, 0.0)
-        glVertex3f(-1.0, -1.0,  1.0)
-        glTexCoord2f(1.0, 1.0)
-        glVertex3f(-1.0,  1.0,  1.0)
-        glTexCoord2f(0.0, 1.0)
-        glVertex3f(-1.0,  1.0, -1.0)
-        glEnd()
+    glUseProgram(shader)
 
-def put_light():
-    glLight(GL_LIGHT0, GL_POSITION,  (1, 1, -1.5, 1))
-    glLightfv(GL_LIGHT0, GL_AMBIENT,  (0.9, 0.1, 0.1))
-    glLightfv(GL_LIGHT0, GL_DIFFUSE,  (0.9, 0.1, 0.1))
-    glLightfv(GL_LIGHT0, GL_SPECULAR, (0.9,0.1,.1));
-    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, (0,0,-1));
-    glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, 12.0);
-    glEnable(GL_LIGHTING)
-    glEnable(GL_COLOR_MATERIAL)
+    glClearColor(0.2, 0.3, 0.2, 1.0)
     glEnable(GL_DEPTH_TEST)
-    glEnable(GL_LIGHT0)
+    #glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
-pygame.init()
-display = (800, 600)
-screen = pygame.display.set_mode(
-    display, pygame.DOUBLEBUF | pygame.OPENGL | pygame.OPENGLBLIT)
+    view = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.0, 0.0, -3.0]))
+    projection = pyrr.matrix44.create_perspective_projection_matrix(65.0, w_width / w_height, 0.1, 100.0)
+    model = pyrr.matrix44.create_from_translation(pyrr.Vector3([0.0, 0.0, 0.0]))
 
-loadTexture()
+    view_loc = glGetUniformLocation(shader, "view")
+    proj_loc = glGetUniformLocation(shader, "projection")
+    model_loc = glGetUniformLocation(shader, "model")
 
-gluPerspective(45, display[0] / display[1], 0.1, 50.0)
-glTranslatef(0.0, 0.0, -5)
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, view)
+    glUniformMatrix4fv(proj_loc, 1, GL_FALSE, projection)
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, model)
 
-glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-glEnable(GL_LIGHTING)
-put_light()
-while True:
 
-    for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    glPushMatrix()
-                    glRotatef(2, 0, -1, 0)
-                    draw_cube(lines=False)
-                    glPopMatrix()
-                if event.key == pygame.K_RIGHT:
-                    glPushMatrix()
-                    glRotatef(2, 0 , 1, 0)
-                    draw_cube()
-                    glPopMatrix()
-                if event.key == pygame.K_UP:
-                    glPushMatrix()
-                    glRotatef(2, 1, 0, 0)
-                    draw_cube()
-                    glPopMatrix()
-                if event.key == pygame.K_DOWN:
-                    glPushMatrix()
-                    glRotatef(2, -1, 0, 0)
-                    draw_cube()
-                    glPopMatrix()
-    glDisable(GL_LIGHTING)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glEnable(GL_LIGHTING)
-    glLight(GL_LIGHT0, GL_POSITION,  (1, 1, 1,1))
-    glLightfv(GL_LIGHT0, GL_AMBIENT,  (5, 1, 1))
-    glLightfv(GL_LIGHT0, GL_DIFFUSE,  (5, 1, 1))
-    glLightfv(GL_LIGHT0, GL_SPECULAR, (5, 1, 1));
-    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, (0,0,-1));
-    glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, 12.0);
-    glEnable(GL_LIGHTING)
-    glEnable(GL_COLOR_MATERIAL)
-    glEnable(GL_DEPTH_TEST)
-    glEnable(GL_LIGHT0)
-    draw_cube()
-    glDisable(GL_LIGHTING)
-    #glPopMatrix()
-    pygame.display.flip()
+    counter_x = 0
+    counter_y = 0
+    while not glfw.window_should_close(window):
+        glfw.poll_events()
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        rot_x = pyrr.Matrix44.from_x_rotation(0.9 * counter_x )
+        rot_y = pyrr.Matrix44.from_y_rotation(0.9 * counter_y )
+        if (glfw.get_key(window,glfw.KEY_UP) == glfw.PRESS):
+            counter_x-=0.01
+        if (glfw.get_key(window,glfw.KEY_DOWN) == glfw.PRESS):
+            counter_x+=0.01
+        if (glfw.get_key(window,glfw.KEY_RIGHT) == glfw.PRESS):
+            counter_y+=0.01
+        if (glfw.get_key(window,glfw.KEY_LEFT) == glfw.PRESS):
+            counter_y-=0.01
+
+        transformLoc = glGetUniformLocation(shader, "transform")
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, rot_x * rot_y)
+
+        glDrawArrays(GL_TRIANGLES, 0, len(obj.vertex_index))
+
+        glfw.swap_buffers(window)
+
+    glfw.terminate()
+
+if __name__ == "__main__":
+    main()

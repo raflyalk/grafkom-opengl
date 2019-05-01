@@ -91,8 +91,8 @@ def main():
         glfw.poll_events()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        rot_x = pyrr.Matrix44.from_x_rotation(0.5 * counter_x )
-        rot_y = pyrr.Matrix44.from_y_rotation(0.5 * counter_y )
+        rot_x = pyrr.Matrix44.from_x_rotation(0.9 * counter_x )
+        rot_y = pyrr.Matrix44.from_y_rotation(0.9 * counter_y )
         if (glfw.get_key(window,glfw.KEY_UP) == glfw.PRESS):
             counter_x-=0.01
         if (glfw.get_key(window,glfw.KEY_DOWN) == glfw.PRESS):
