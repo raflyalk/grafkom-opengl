@@ -8,28 +8,105 @@ from ObjLoader import *
 import random
 
 class Particle:
-    def __init__(self):
+    def __init__(self, x=None, y=10.0, z=None, vel=0):
         self.alive = True
         self.life = 10.0
         self.fade = random.uniform(0, 100)/1000 + 0.003
 
-        self.xpos = random.uniform(-10, 11)
-        self.ypos = 10.0
-        self.zpos = random.uniform(-10, 11)
+        if x == None:
+            x = random.uniform(-10, 11)
+        if z == None:
+            z = random.uniform(-10, 11)
 
-        self.red = 0.0
-        self.green = 0.0
+        self.xpos = x
+        self.ypos = y
+        self.zpos = z
+
+        self.red = 1.0
+        self.green = 1.0
         self.blue = 1.0
 
-        self.vel = 0.0
+        self.vel = vel
         self.gravity = -0.8
 
 MAX_RAIN_PARTICLES = 500
 par_sys = [Particle()] * MAX_RAIN_PARTICLES
 slowdown = 2.0
 
+MAX_SMOKE_PARTICLES = 2000
+smoke_par = [Particle(-0.40611, -0.145301, -1.409140, 10)] * MAX_SMOKE_PARTICLES
+slowdown_smoke = 2.0
+
+def initSmokeParticles(i):
+    smoke_par[i] = Particle(-0.40611, -0.145301, -1.409140, 10)
+
 def initParticles(i):
     par_sys[i] = Particle()
+
+def drawSmoke():
+    loop = 0
+
+    while loop < MAX_SMOKE_PARTICLES:
+        if (smoke_par[loop].alive == True):
+            x = smoke_par[loop].xpos
+            y = smoke_par[loop].ypos
+            z = smoke_par[loop].zpos
+
+            # Draw smoke particles
+            glBegin(GL_QUADS)
+            
+            glVertex3f(x, y, z)
+            glVertex3f(x-0.01, y, z)
+            glVertex3f(x-0.01, y-0.01, z)
+            glVertex3f(x, y-0.01, z)
+
+            glVertex3f(x, y, z-0.01)
+            glVertex3f(x-0.01, y, z-0.01)
+            glVertex3f(x-0.01, y-0.01, z-0.01)
+            glVertex3f(x, y-0.01, z-0.01)
+            
+            glVertex3f(x, y, z)
+            glVertex3f(x, y, z-0.01)
+            glVertex3f(x, y-0.01, z-0.01)
+            glVertex3f(x, y-0.01, z)
+            
+            glVertex3f(x-0.01, y, z)
+            glVertex3f(x-0.01, y, z-0.01)
+            glVertex3f(x-0.01, y-0.01, z-0.01)
+            glVertex3f(x-0.01, y-0.01, z)
+            
+            glVertex3f(x, y, z)
+            glVertex3f(x-0.01, y, z)
+            glVertex3f(x-0.01, y, z-0.01)
+            glVertex3f(x, y, z-0.01)
+
+            glVertex3f(x, y-0.01, z)
+            glVertex3f(x-0.01, y-0.01, z)
+            glVertex3f(x-0.01, y-0.01, z-0.01)
+            glVertex3f(x, y-0.01, z-0.01)
+
+            glEnd()
+
+            # Move
+            # Adjust slowdown for speed
+            smoke_par[loop].zpos -= smoke_par[loop].vel / (slowdown*1000)
+            smoke_par[loop].vel -= smoke_par[loop].vel / 1000
+
+            smoke_par[loop].xpos += random.uniform(-100, 100) / (slowdown*5000)
+            
+            smoke_par[loop].ypos += random.uniform(-100, 100) / (slowdown*6000)
+            
+            # Decay
+            smoke_par[loop].life = smoke_par[loop].life - smoke_par[loop].fade
+
+            if smoke_par[loop].zpos <= -10:
+                smoke_par[loop].life = -1.0
+            
+            # Revive
+            if smoke_par[loop].life < 0.0:
+                initSmokeParticles(loop)
+
+        loop = loop + 2
 
 def drawRain():
     loop = 0
@@ -41,7 +118,7 @@ def drawRain():
             z = par_sys[loop].zpos
 
             # Draw particles
-            glColor3f(0.5, 0.5, 1.0)
+            glColor3f(1.0, 1.0, 1.0)
             glLineWidth(2.0)
             glBegin(GL_LINES)
             glVertex3f(x, y, z)
@@ -119,7 +196,7 @@ def main():
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     # load image
-    image = Image.open("res/fire.jpg")
+    image = Image.open("res/water.jpeg")
     flipped_image = image.transpose(Image.FLIP_TOP_BOTTOM)
     img_data = numpy.array(list(flipped_image.getdata()), numpy.uint8)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
@@ -168,7 +245,7 @@ def main():
         glDrawArrays(GL_TRIANGLES, 0, len(obj.vertex_index))
 
         drawRain()
-
+        drawSmoke()
         glfw.swap_buffers(window)
 
     glfw.terminate()
